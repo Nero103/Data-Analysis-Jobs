@@ -20,8 +20,19 @@ All columns are nullable. Joins: `job_postings_fact.job_id = skills_job_dim.job_
 | job_health_insurance | BOOLEAN | |
 | job_country | VARCHAR | Always filled for DA; 171 distinct |
 | salary_rate | VARCHAR | year / hour / month / week / day / NULL |
-| salary_year_avg | DOUBLE | Only when salary_rate = 'year' |
-| salary_hour_avg | DOUBLE | Only when salary_rate = 'hour' |
+| salary_year_avg | DOUBLE | Filled only when salary_rate = 'year', but not on every such row (see below) |
+| salary_hour_avg | DOUBLE | Filled only when salary_rate = 'hour', but not on every such row (see below) |
+
+**Count salaries from the amount columns, not from `salary_rate`.** Some rows have `salary_rate` = 'year' or 'hour' but no amount in either column; there are no zeros and no amounts in the wrong column. Use `COUNT(salary_year_avg)` (or `salary_year_avg IS NOT NULL`) for yearly salaries and `COUNT(salary_hour_avg)` for hourly ones. Rows with a rate but no amount:
+
+| Population | rate = 'year', no amount | rate = 'hour', no amount |
+|---|---|---|
+| All countries | 31,156 of 92,004 | 640 of 16,049 |
+| US, all postings | 75 of 55,841 | 26 of 13,296 |
+| US, source category (`job_title_short = 'Data Analyst'`) | 19 of 12,586 | 6 of 3,610 |
+| US, title rule (`job_title ILIKE '%data analyst%'`) | 14 of 8,000 | 3 of 2,215 |
+
+Counting by `salary_rate = 'year'` would report 8,000 yearly salaries under the US title rule instead of the correct 7,986.
 
 ## skills_job_dim (3,159,600 rows)
 

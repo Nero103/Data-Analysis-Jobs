@@ -18,7 +18,7 @@ The views `skill_metrics` and `company_remote` in `scripts/clean_views.sql` comp
 ## 2. Average salary (pay column, decided)
 
 - **Definition:** the average yearly salary of postings that mention the tool and list one.
-- **Formula:** `AVG(salary_year_avg)` over those postings, keeping only salaries between $25k and $300k.
+- **Formula:** `AVG(salary_year_avg)` over those postings, keeping only salaries from $25k to $300k inclusive (`BETWEEN 25000 AND 300000`).
 - **Comparison:** the overall average for all postings in scope (see metric 3). Offer the median as an alternative only if the user asks, because they chose the average.
 - **Examples:** Snowflake $117,023, Python $113,321, SQL $108,645, Excel $91,956.
 
@@ -33,7 +33,7 @@ The views `skill_metrics` and `company_remote` in `scripts/clean_views.sql` comp
 ## 4. Salary sample size
 
 - **Definition:** how many salaries a tool's average is based on.
-- **Formula:** `COUNT(salary_year_avg)` over postings mentioning the tool, after the $25k–$300k filter.
+- **Formula:** `COUNT(salary_year_avg)` over postings mentioning the tool, after the $25k–$300k filter (both ends inclusive).
 - **Comparison:** a threshold of at least 30 salaries to show the average. Grey out or hide it below that. 71 of 313 tools meet the threshold.
 - **Examples:** SQL 3,545; Snowflake 435.
 
