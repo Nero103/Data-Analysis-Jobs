@@ -1,6 +1,10 @@
 -- Cleaned views for the Data Analyst skills dashboard.
 -- Load into a READ-ONLY connection; everything here is a TEMP view.
--- Each choice is marked DECIDED (user agreed) or PROPOSED (confirm with the user). Flip as needed.
+-- Each choice is marked with a status (same labels as CLAUDE.md and SKILL.md). Flip as needed.
+--   DECIDED         explicitly approved methodological choice
+--   WORKING DEFAULT currently implemented, but subject to review
+--   PROPOSED        suggested, not approved or not necessarily implemented
+--   OPEN            unresolved methodological question; may have a working default
 
 -- Postings in scope.
 create or replace temp view da_us as
@@ -8,11 +12,11 @@ select j.*,
        case when j.job_location = 'Anywhere' or j.job_work_from_home then 'Remote'
             when regexp_matches(j.job_location, ', [A-Z]{2}$') then right(j.job_location, 2)
             else 'Other / unknown' end as us_state,
-       -- PROPOSED: keep yearly salaries in a sensible range; outliers become NULL, posting stays.
+       -- WORKING DEFAULT: keep yearly salaries $25k-$300k, both ends inclusive; outliers become NULL, posting stays.
        case when j.salary_year_avg between 25000 and 300000 then j.salary_year_avg end as salary_clean
 from job_postings_fact j
 where j.job_country = 'United States'                -- DECIDED: US only (currency)
-  and j.job_title ilike '%data analyst%';            -- OPEN: title rule. Category alternative:
+  and j.job_title ilike '%data analyst%';            -- OPEN; WORKING DEFAULT: title rule. Category alternative:
                                                       --   j.job_title_short = 'Data Analyst'
 
 -- Posting x clean technical skill (deduplicated by skill name).
@@ -21,7 +25,7 @@ select distinct p.job_id, d.skills as skill, d.type
 from da_us p
 join skills_job_dim s using (job_id)
 join skills_dim d using (skill_id)
-where d.skills not in ('Go', 'C', 'Ada', 'Narrative')            -- PROPOSED: text-match false positives
+where d.skills not in ('Go', 'C', 'Ada', 'Narrative')            -- WORKING DEFAULT: text-match false positives
   and (d.type in ('Programming Languages', 'Analytics', 'Infrastructure')
        or d.skills in ('PowerPoint', 'Jira', 'SharePoint', 'Confluence', 'Visio',
                        'Smartsheet', 'Microsoft Power Automate + Copilot'));  -- PROPOSED: hand-picked Applications

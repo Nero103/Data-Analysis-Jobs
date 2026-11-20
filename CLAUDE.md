@@ -10,14 +10,28 @@ A portfolio project by an aspiring data analyst: a dashboard showing which techn
   - Data Analyst Skill Explorer, the main dashboard: https://claude.ai/artifact/W4cww43zqM99szxejNtejn
   - Data Analyst Jobs EDA, the exploratory analysis: https://claude.ai/artifact/KfqGK9sVaNTogVm4ftJ9hY
 
-## Decisions made
+## Decisions and working defaults
+
+Status labels, used the same way here, in the skill and in `scripts/clean_views.sql`:
+
+- **DECIDED**: explicitly approved methodological choice.
+- **WORKING DEFAULT**: currently implemented, but subject to review.
+- **PROPOSED**: suggested, not approved or not necessarily implemented.
+- **OPEN**: unresolved methodological question; may have a working default.
+
+DECIDED:
 
 - Scope is **US postings only**, because other countries have almost no salaries and mixed currencies.
-- "Data Analyst" means the job title contains "data analyst", at any seniority. The dashboard can also switch to the source's broader category.
-- Popularity is the number of postings mentioning a tool. Pay is the average yearly salary of those postings, with salaries kept only between $25k and $300k.
-- Only technical tools are counted. Go, C, Ada and Narrative are removed as text-matching errors.
+- Popularity is the number of postings mentioning a tool. Pay is the average yearly salary of those postings.
+- Only technical tools are counted.
 - Pay and popularity are shown side by side. Don't combine them into a single score.
 - Company-level views leave out recruiters, staffing firms, job boards, survey panels and gig platforms.
+
+WORKING DEFAULT (implemented, subject to review):
+
+- "Data Analyst" means the job title contains "data analyst" (`job_title ILIKE '%data analyst%'`), at any seniority. Who counts as a Data Analyst is still OPEN; the dashboard can also switch to the source's broader category.
+- Yearly salaries are kept only from $25,000 to $300,000, both ends inclusive.
+- Go, C, Ada and Narrative are removed as text-matching errors.
 
 ## Languages
 
