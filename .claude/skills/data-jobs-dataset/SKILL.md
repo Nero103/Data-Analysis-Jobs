@@ -15,7 +15,7 @@ The user is an aspiring data analyst choosing which skills to learn. They care a
 |---|---|
 | Main question | Is this tool worth learning? (look up a skill and judge it) |
 | How it answers | Pay and popularity side by side, with no combined score; the user makes the call |
-| Jobs counted | Data Analyst titles only, at any seniority level |
+| Jobs counted | Data Analyst titles only, at any seniority level (implemented as the title rule, a WORKING DEFAULT; the exact definition is OPEN, see issue 2) |
 | Location | Several places, with a location filter. **For now, US only**, to avoid mixed currencies |
 | Popularity | Raw count of postings that mention the skill |
 | Pay | Average yearly salary of postings that mention the skill |
@@ -59,13 +59,18 @@ US Data Analyst slice (source category = Data Analyst, country = United States):
 
 ## Data-quality issues and how to handle them
 
-Each item says what's wrong, why it matters, and what to do about it. "Decided" means the user agreed. "Proposed" means it's recommended but not yet confirmed, so confirm with the user before relying on it in anything final.
+Each item says what's wrong, why it matters, and what to do about it. Status labels match CLAUDE.md and `scripts/clean_views.sql`:
+
+- **Decided**: explicitly approved methodological choice.
+- **Working default**: currently implemented, but subject to review. Say it was applied when you report numbers.
+- **Proposed**: suggested, not approved or not necessarily implemented. Confirm with the user before relying on it in anything final.
+- **Open**: unresolved methodological question; may have a working default.
 
 1. **Currencies (decided: US only).** Outside the US there are almost no salaries: the UK has 16, Spain 3. Values that do exist are a mix. So filter `job_country = 'United States'` for pay. A location filter should mean US states plus Remote, not countries.
-2. **Who counts as a Data Analyst (open decision).** The source's `job_title_short = 'Data Analyst'` category is broad: about half its US postings are titled Business Analyst, BI Analyst, plain "Analyst" or even Data Scientist. The stricter rule, `job_title ILIKE '%data analyst%'` across all categories, gives 39,519 US postings with 7,986 yearly salaries, versus 64,268 and 12,567 for the category. The user asked for "Data Analyst titles only", which points to the title rule, but they haven't explicitly confirmed it. Show the effect or ask before you pick one.
-3. **False skill matches (proposed: exclude).** Skills were extracted by text matching. So `Go`, `C`, `Ada` and `Narrative` fire on ordinary words ("go", "C-level", "ADA compliance", "narrative"). They appear on unrelated postings such as "Senior Business Analyst", and would otherwise rank in the top 15. Also, four names appear twice under different ids (Red Hat, IBM Watson, Hugging Face, IBM Db2), so group by name, not id.
+2. **Who counts as a Data Analyst (open; working default: title rule).** The source's `job_title_short = 'Data Analyst'` category is broad: about half its US postings are titled Business Analyst, BI Analyst, plain "Analyst" or even Data Scientist. The stricter rule, `job_title ILIKE '%data analyst%'` across all categories, gives 39,519 US postings with 7,986 yearly salaries, versus 64,268 and 12,567 for the category. The user asked for "Data Analyst titles only", which points to the title rule, but they haven't explicitly confirmed it. The title rule is the working default in `scripts/clean_views.sql` and the main dashboard; the question itself stays open. Show the effect or ask before you pick one.
+3. **False skill matches (working default: exclude Go, C, Ada and Narrative).** Skills were extracted by text matching. So `Go`, `C`, `Ada` and `Narrative` fire on ordinary words ("go", "C-level", "ADA compliance", "narrative"). They appear on unrelated postings such as "Senior Business Analyst", and would otherwise rank in the top 15. Also, four names appear twice under different ids (Red Hat, IBM Watson, Hugging Face, IBM Db2), so group by name, not id.
 4. **Which types are "technical tools" (proposed).** Keep Programming Languages, Analytics and Infrastructure. Applications mixes real tools (PowerPoint, Jira, SharePoint, Confluence, Visio, Smartsheet, Power Automate) with noise (Zoom, Outlook, Outreach, Momentum, Microsoft Teams), so hand-pick from it. ML & AI, Data Sources and Consulting are mostly noise for this role.
-5. **Salary outliers (proposed: keep $25k–$300k, both ends inclusive).** The spread of `salary_year_avg` depends on the population, so always name it:
+5. **Salary outliers (working default: keep $25k–$300k, both ends inclusive).** The spread of `salary_year_avg` depends on the population, so always name it:
 
    | Population | Yearly salaries | Min | Max | Middle 50% | Below $25k | Above $300k |
    |---|---|---|---|---|---|---|
@@ -73,13 +78,13 @@ Each item says what's wrong, why it matters, and what to do about it. "Decided" 
    | US, source category (`job_title_short = 'Data Analyst'`) | 12,567 | $16,000 | $900,000 | $80k–$125k | 41 | 36 |
    | US, title rule (`job_title ILIKE '%data analyst%'`) | 7,986 | $16,000 | $800,000 | $77.5k–$120k | 37 | 12 |
 
-   So 77 yearly salaries fall outside the range for the US source category, and 49 for the US title rule. The title rule is the currently implemented default in `scripts/clean_views.sql` and the main dashboard, but its methodological status is still an open decision (see issue 2). The range is inclusive: `salary_year_avg BETWEEN 25000 AND 300000` keeps exactly $25,000 (5 postings under the title rule, 7 in the category) and exactly $300,000 (none at present). There are $900k "PowerBI Developer" and "Team Lead" postings, which are clearly entry errors, and averages are sensitive to them.
+   So 77 yearly salaries fall outside the range for the US source category, and 49 for the US title rule. The title rule is the working default in `scripts/clean_views.sql` and the main dashboard, but who counts as a Data Analyst is still open (see issue 2). The range is inclusive: `salary_year_avg BETWEEN 25000 AND 300000` keeps exactly $25,000 (5 postings under the title rule, 7 in the category) and exactly $300,000 (none at present). There are $900k "PowerBI Developer" and "Team Lead" postings, which are clearly entry errors, and averages are sensitive to them.
 6. **Salary periods.** `salary_rate` is year, hour, month, week, day or NULL, and NULL is about 74% of US postings. Only year (`salary_year_avg`) and hour (`salary_hour_avg`) carry amounts; month, week and day rows have none. The proposal is to convert hourly × 2,080 to yearly, which adds about 30% more salary data. That isn't decided, so keep hourly separate unless the user agrees.
 7. **Thin salary samples (proposed: show n, hide below 30).** Of 620 skills, about 130 have 30 or more yearly salaries and about 63 have 100 or more. Always show how many salaries sit behind an average, and grey out or hide skills below the minimum.
 8. **Missing skills.** 25% of postings link to no skill. Count popularity as postings that mention the skill. Don't use share of all postings unless you say what the denominator is.
 9. **Location parsing.** `job_location` ending in `, XX` gives a US state for 93% of US postings. "Anywhere", "United States" and blanks don't parse; route "Anywhere" and `job_work_from_home` to Remote.
 
-`scripts/clean_views.sql` creates temp views that apply all of the above, with each choice clearly marked so you can flip it. Use it as the starting point for any analysis, and tell the user which choices were applied. With every proposed choice applied (title rule, US only, $25k–$300k, technical tools, no false matches), you get 39,519 postings, 7,937 usable salaries and 313 skills, of which 71 have 30 or more salaries. The top six are SQL, Excel, Python, Power BI, Tableau and R.
+`scripts/clean_views.sql` creates temp views that apply all of the above, with each choice clearly marked so you can flip it. Use it as the starting point for any analysis, and tell the user which choices were applied. With every implemented choice applied (US only, decided; title rule, $25k–$300k and false-match removal, working defaults; the technical-tool list, proposed), you get 39,519 postings, 7,937 usable salaries and 313 skills, of which 71 have 30 or more salaries. The top six are SQL, Excel, Python, Power BI, Tableau and R.
 
 ## Metrics
 
@@ -88,7 +93,7 @@ Five metric definitions are recorded in `references/metrics.md`, each with its f
 | Metric | Formula, in short | Status |
 |---|---|---|
 | Skill demand | postings mentioning the tool | Decided (popularity column) |
-| Average salary | `AVG(salary_year_avg)` of those postings, $25k–$300k | Decided (pay column) |
+| Average salary | `AVG(salary_year_avg)` of those postings, $25k–$300k | Decided (pay column); the $25k–$300k range is a working default |
 | Pay premium | tool average − overall average | Proposed |
 | Salary sample size | count of salaries behind the average; show the average only at 30 or more | Proposed |
 | Remote % per company | remote postings ÷ company postings, employers with 20+ postings, recruiters and job platforms excluded | Requested; see caveats |

@@ -2,7 +2,7 @@
 
 Five metrics proposed for the dashboard (Nov 2026). Metrics 1 and 2 are the two columns the user decided on. Metrics 3 to 5 were suggested and the user asked for them to be recorded. Their place on the dashboard isn't settled, so check with the user before featuring them.
 
-Example values use the scope in `scripts/clean_views.sql`: title rule, US only, salaries $25k–$300k, technical tools only, false matches removed. In that scope there are 39,519 postings and 7,937 usable salaries, with an overall average of $102,782 and an overall remote rate of 2.3%. Re-run before quoting them, and always name the scope you used.
+Example values use the scope in `scripts/clean_views.sql`: title rule (working default), US only (decided), salaries $25k–$300k inclusive (working default), technical tools only (decided; the exact tool list is proposed), false matches removed (working default). Status labels are defined in SKILL.md. In that scope there are 39,519 postings and 7,937 usable salaries, with an overall average of $102,782 and an overall remote rate of 2.3%. Re-run before quoting them, and always name the scope you used.
 
 The views `skill_metrics` and `company_remote` in `scripts/clean_views.sql` compute all five.
 
@@ -18,7 +18,7 @@ The views `skill_metrics` and `company_remote` in `scripts/clean_views.sql` comp
 ## 2. Average salary (pay column, decided)
 
 - **Definition:** the average yearly salary of postings that mention the tool and list one.
-- **Formula:** `AVG(salary_year_avg)` over those postings, keeping only salaries from $25k to $300k inclusive (`BETWEEN 25000 AND 300000`).
+- **Formula:** `AVG(salary_year_avg)` over those postings, keeping only salaries from $25k to $300k inclusive (`BETWEEN 25000 AND 300000`). The average is decided; the range is a working default.
 - **Comparison:** the overall average for all postings in scope (see metric 3). Offer the median as an alternative only if the user asks, because they chose the average.
 - **Examples:** Snowflake $117,023, Python $113,321, SQL $108,645, Excel $91,956.
 
