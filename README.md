@@ -134,7 +134,43 @@ To rebuild the data files behind the dashboard:
 python3 -I .claude/skills/data-jobs-dataset/scripts/build_dashboard.py data_jobs.duckdb out/
 ```
 
+To redraw the charts in this README (needs `pip install duckdb matplotlib`):
+
+```bash
+python3 -I .claude/skills/data-jobs-dataset/scripts/make_readme_charts.py data_jobs.duckdb images/
+```
+
 ## Findings
+
+### Most requested tools
+
+![Horizontal bar chart of the 15 tools mentioned in the most Data Analyst postings. SQL leads with 18,590 postings (47%), followed by Excel, Python, Power BI and Tableau.](images/top_tools.png)
+
+SQL is in almost half of all postings. Excel, Python, Power BI and Tableau each appear in a quarter to a third, and then demand drops sharply: no other tool is in more than 16%.
+
+### Which tools pay more
+
+![Diverging bar chart of the pay premium for the 15 most requested tools. Looker, Snowflake and AWS pay $14k to $20k above the average posting; Excel and PowerPoint pay about $10.5k below.](images/pay_premium.png)
+
+Cloud and data-platform tools (Looker, Snowflake, AWS, Azure) carry the largest premiums among popular tools. Excel and PowerPoint sit about $10.5k below average, which suggests they're tied to more junior or administrative roles.
+
+### Pay against popularity
+
+![Scatter plot of average salary against number of postings for each tool with 30 or more salaries, on a log scale. SQL, Python, R and Tableau sit to the right above the average line; Excel sits far right but well below it; the highest-paid tools, such as Scala, dbt and Teradata, sit to the left with few postings.](images/pay_vs_popularity.png)
+
+There's no single best tool. The most requested tools sit near the average salary, while the highest-paid tools (Scala, dbt, Teradata, Spark) appear in only a few hundred to about a thousand postings. Python, SQL and R are the strongest mix of both: well to the right and above the average line.
+
+### Trends over the year
+
+![Line chart of Data Analyst postings per month. All postings fall from about 4,400 to 5,300 a month in mid-2025 to about 2,000 to 2,400 a month in 2026; postings with a yearly salary drop from over 1,000 a month to under 400 from December.](images/monthly_postings.png)
+
+Postings fell from 4,421 in July 2025 (peaking at 5,288 in September) to about 2,000–2,400 a month from February 2026. Postings that list a yearly salary fell even more sharply after November, from 1,282 to 223 a month. That drop is too abrupt to be the job market alone and probably reflects a change in how salaries were collected, so treat month-to-month pay comparisons with care.
+
+![Line chart of the share of each month's postings that mention SQL, Excel, Python, Power BI and Tableau. All five rise over the year; SQL climbs from 49% in July 2025 to 61% in June 2026.](images/tool_share_trend.png)
+
+All five top tools are mentioned in a larger share of postings by mid-2026. SQL rises from 49% to 61%, Python from 30% to 39% and Power BI from 26% to 38%. Their order stays the same. Because every tool rises together, part of this is likely a change in how skills were extracted rather than demand alone.
+
+### Summary tables
 
 **Most requested tools**
 
@@ -168,6 +204,7 @@ python3 -I .claude/skills/data-jobs-dataset/scripts/build_dashboard.py data_jobs
 - **Premium shows correlation, not cause.** Senior roles ask for more tools and pay more. A premium means postings naming a tool pay more, not that learning it will raise your pay.
 - **Remote and hybrid are undercounted.** Only fully remote postings are flagged, and 2,637 postings with "remote" in the title aren't. There's no hybrid field, so hybrid comes from job titles only.
 - **Recruiters were removed by a hand-made list.** It was reviewed only for companies with 20 or more postings.
+- **Collection changed during the year.** Monthly postings roughly halved from late 2025 to 2026, salaried postings fell from over 1,000 to about 250 a month after November, and every top tool's share rose at once. These shifts look like changes in how the data was gathered, so the trend charts show direction, not precise market change.
 - **This is a snapshot.** The data covers one year and is a file, not a live source, so the dashboard changes only when the files are rebuilt.
 
 ## Recommendations
@@ -182,7 +219,7 @@ python3 -I .claude/skills/data-jobs-dataset/scripts/build_dashboard.py data_jobs
 **For the data and the project**
 1. **Get description text, not just titles.** Hybrid work and many skills are mentioned in descriptions, which the data doesn't include.
 2. **Convert hourly pay to yearly** (× 2,080 hours). That would add about 3,600 salaries, roughly 30% more salary data.
-3. **Check whether the trend changes.** Compare the first and second half of the year to see which tools are rising or falling.
+3. **Explain the mid-year shifts.** Find out why postings, salary listings and skill shares all changed around December 2025 before reading the trends as market changes.
 4. **Add non-US data with currency conversion** once enough salaries exist, to make the location filter international.
 5. **Look at seniority** (junior vs. senior titles) to separate a tool's pay effect from the seniority of the roles that ask for it.
 
@@ -191,7 +228,8 @@ python3 -I .claude/skills/data-jobs-dataset/scripts/build_dashboard.py data_jobs
 ```
 CLAUDE.md                                   Project notes and rules for Claude
 README.md                                   This file
-data_jobs.duckdb                            The database (main branch)
+data_jobs.duckdb                            The database
+images/                                     Charts used in this README
 .claude/skills/data-jobs-dataset/
   SKILL.md                                  What's known about the data and the dashboard
   references/schema.md                      Table and column details
@@ -199,6 +237,7 @@ data_jobs.duckdb                            The database (main branch)
   scripts/clean_views.sql                   Cleaned views and metric SQL
   scripts/build_dashboard.py                Builds the dashboard's data files
   scripts/build_eda.py                      Builds the EDA dashboard's data files
+  scripts/make_readme_charts.py             Draws the charts in images/
   scripts/inspect.py                        Lists tables, schemas and sample rows
   scripts/get_db.sh                         Copies the database out of main
 ```
