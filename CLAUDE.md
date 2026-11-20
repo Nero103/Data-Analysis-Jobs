@@ -19,6 +19,11 @@ A portfolio project by an aspiring data analyst: a dashboard showing which techn
 - Pay and popularity are shown side by side. Don't combine them into a single score.
 - Company-level views leave out recruiters, staffing firms, job boards, survey panels and gig platforms.
 
+## Languages
+
+- Always use Python or SQL for scripting, repository analysis and tracing code provenance.
+- Never use Java.
+
 ## Working with the user
 
 - Ask questions one at a time.
