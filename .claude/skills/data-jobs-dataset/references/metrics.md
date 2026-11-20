@@ -49,3 +49,22 @@ The views `skill_metrics` and `company_remote` in `scripts/clean_views.sql` comp
   - 133 of the 181 companies with 20+ postings are at 0%, so the median company is 0%.
   - The top of the list is job platforms and recruiters (Upwork 100%, vmysmartpros, remotepromsp), not employers. Consider labelling or excluding them.
   - It describes companies, not skills. **Remote % per skill** (remote postings mentioning the tool ÷ all postings mentioning it) fits the main question better. Offer it as an extra table column.
+
+## Added KPIs (Nov 2026, requested by the user)
+
+The KPI cards are: postings, postings per week, average salary, remote share and hybrid share. The "tools with 30+ salaries" card was removed at the user's request; the table still greys out averages from fewer than 30 salaries.
+
+### Postings per week
+- **Definition:** average number of Data Analyst postings per week.
+- **Formula:** postings ÷ weeks the data covers. Weeks = (last − first US posting date + 1) ÷ 7, which is about 52.1 for 2025-07-01 to 2026-06-30.
+- **Example:** 757.9 per week under the title rule, all US.
+
+### Hybrid share
+- **Definition:** the share of postings whose job title says "hybrid".
+- **Formula:** `AVG((job_title ILIKE '%hybrid%')::int)`.
+- **Caveat:** the data has no hybrid field (not in the location, schedule type or work-from-home flag). Only titles carry the word, so this is a floor, not a full count. It comes to 1.3% (905 of about 67,700 US postings). Label it "job title says hybrid".
+- **Related:** the remote flag also undercounts. 2,637 US postings say "remote" in the title but aren't flagged.
+
+## Excluding recruiters and job platforms (decided)
+
+The user asked for recruiters and job platforms to be removed from company-level views. `scripts/build_dashboard.py` holds a hand-reviewed `INTERMEDIARIES` list, plus every name starting with "beBee", and adds an `intermediary` flag to each company row. The list covers job boards and aggregators (Dice, Lensa, VirtualVocations), survey panels and gig or data-annotation platforms (Online Surveys, Focus Group Panel, Upwork, DataAnnotation, Outlier AI), and recruiters and staffing firms (Robert Half, Insight Global, TEKsystems, Harnham). Of 181 companies with 20+ postings under the title rule, 99 are intermediaries and 82 are employers; 62 of those employers post no remote roles. The list was reviewed only for companies with 20 or more postings, so extend it if you lower that threshold.

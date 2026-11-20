@@ -83,7 +83,9 @@ Five metric definitions are recorded in `references/metrics.md`, each with its f
 | Average salary | `AVG(salary_year_avg)` of those postings, $25k–$300k | Decided (pay column) |
 | Pay premium | tool average − overall average | Proposed |
 | Salary sample size | count of salaries behind the average; show the average only at 30 or more | Proposed |
-| Remote % per company | remote postings ÷ company postings, companies with 20+ postings | Requested; see caveats |
+| Remote % per company | remote postings ÷ company postings, employers with 20+ postings, recruiters and job platforms excluded | Requested; see caveats |
+| Postings per week | postings ÷ weeks covered (~52.1) | Requested (KPI card) |
+| Hybrid share | share of job titles saying "hybrid"; a floor, since there is no hybrid field | Requested (KPI card) |
 
 ## Working with it
 
