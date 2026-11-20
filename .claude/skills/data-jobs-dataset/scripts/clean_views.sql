@@ -36,3 +36,32 @@ select k.skill, any_value(k.type) as type,
        count(p.salary_clean) >= 30 as enough_salaries         -- PROPOSED: show pay only when n >= 30
 from da_skills k join da_us p using (job_id)
 group by k.skill;
+
+-- Dashboard metrics 1-4 (see references/metrics.md), plus share of postings and remote % per skill.
+create or replace temp view skill_metrics as
+with base as (
+  select count(*) as all_postings, avg(salary_clean) as all_avg_salary from da_us
+)
+select s.skill, s.type,
+       s.postings,                                                        -- 1. skill demand
+       round(s.postings / b.all_postings, 4) as share_of_postings,
+       s.avg_salary,                                                      -- 2. average salary
+       round(s.avg_salary - b.all_avg_salary) as pay_premium,             -- 3. pay premium ($)
+       round((s.avg_salary - b.all_avg_salary) / b.all_avg_salary, 4) as pay_premium_pct,
+       s.salaries as salary_sample_size,                                  -- 4. salary sample size
+       s.enough_salaries,
+       r.remote_pct as remote_pct_skill                                   -- optional: remote % per skill
+from skill_stats s
+cross join base b
+join (select k.skill, round(avg(p.job_work_from_home::int), 4) as remote_pct
+      from da_skills k join da_us p using (job_id) group by k.skill) r using (skill);
+
+-- Dashboard metric 5: remote % per company. PROPOSED minimum: 20 postings.
+create or replace temp view company_remote as
+select c.name as company, count(*) as postings,
+       sum(p.job_work_from_home::int) as remote_postings,
+       round(avg(p.job_work_from_home::int), 4) as remote_pct,
+       round(avg(p.job_work_from_home::int) - (select avg(job_work_from_home::int) from da_us), 4) as vs_overall
+from da_us p join company_dim c using (company_id)
+group by c.name
+having count(*) >= 20;

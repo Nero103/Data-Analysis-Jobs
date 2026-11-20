@@ -73,10 +73,25 @@ Each item says what's wrong, why it matters, and what to do about it. "Decided" 
 
 `scripts/clean_views.sql` creates temp views that apply all of the above, with each choice clearly marked so you can flip it. Use it as the starting point for any analysis, and tell the user which choices were applied. With every proposed choice applied (title rule, US only, $25k–$300k, technical tools, no false matches), you get 39,519 postings, 7,937 usable salaries and 313 skills, of which 71 have 30 or more salaries. The top six are SQL, Excel, Python, Power BI, Tableau and R.
 
+## Metrics
+
+Five metric definitions are recorded in `references/metrics.md`, each with its formula, the comparisons to show and caveats. Read that file before computing, charting or explaining any of them.
+
+| Metric | Formula, in short | Status |
+|---|---|---|
+| Skill demand | postings mentioning the tool | Decided (popularity column) |
+| Average salary | `AVG(salary_year_avg)` of those postings, $25k–$300k | Decided (pay column) |
+| Pay premium | tool average − overall average | Proposed |
+| Salary sample size | count of salaries behind the average; show the average only at 30 or more | Proposed |
+| Remote % per company | remote postings ÷ company postings, employers with 20+ postings, recruiters and job platforms excluded | Requested; see caveats |
+| Postings per week | postings ÷ weeks covered (~52.1) | Requested (KPI card) |
+| Hybrid share | share of job titles saying "hybrid"; a floor, since there is no hybrid field | Requested (KPI card) |
+
 ## Working with it
 
 - **Quick look at what's there**: `python3 -I scripts/inspect.py <db>` lists tables, schemas, row counts and 5 sample rows each.
-- **Cleaned base for analysis**: load `scripts/clean_views.sql` into a read-only connection. It defines `da_us` (US postings in scope), `da_skills` (posting × clean technical skill) and `skill_stats` (per-skill postings, salary count, average and median pay).
+- **Cleaned base for analysis**: load `scripts/clean_views.sql` into a read-only connection. It defines `da_us` (US postings in scope), `da_skills` (posting × clean technical skill), `skill_stats` (per-skill postings, salary count, average and median pay), `skill_metrics` (metrics 1–4 plus share of postings and remote % per skill) and `company_remote` (metric 5).
 - **EDA aggregates for a dashboard**: `python3 -I scripts/build_eda.py <db> <out_dir>` writes one JSON per dataset (overview, salary_rate, salary_hist, skills, states, monthly, title_rule). Each file is `{rows, meta}`, with the script's own source embedded in `meta`, so a dashboard's Sources panel shows how every number was made. These files fed the existing EDA dashboard (claude.ai artifact "Data Analyst Jobs EDA"). Re-run the script and re-upload the files to refresh it.
+- **Data for the main dashboard**: `python3 -I scripts/build_dashboard.py <db> <out_dir>` writes `baseline.json`, `skill_metrics.json` and `company_remote.json`. They hold all five metrics, precomputed for both Data Analyst definitions (`scope` = title or category) and every location with 300 or more postings, so the page can filter without a query. They feed the claude.ai dashboard "Data Analyst Skill Explorer" (https://claude.ai/artifact/W4cww43zqM99szxejNtejn). Its filters are `scope` and `location`; the default is title rule, All US. To refresh it, re-run the script and re-upload the files.
 
 When you report numbers, say which scope you used: category vs. title rule, US only, the salary range, and whether suspect skills were excluded. These choices change rankings, and the user is learning to defend their method in a portfolio.
