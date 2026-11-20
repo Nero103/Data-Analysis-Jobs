@@ -223,6 +223,39 @@ All five top tools are mentioned in a larger share of postings by mid-2026. SQL 
 4. **Add non-US data with currency conversion** once enough salaries exist, to make the location filter international.
 5. **Look at seniority** (junior vs. senior titles) to separate a tool's pay effect from the seniority of the roles that ask for it.
 
+## Agentic Data Quality Validation
+
+The project includes a Claude Code subagent, [`data-quality-reviewer`](.claude/agents/data-quality-reviewer.md), that checks the numbers and rules behind the dashboard. It runs only when asked, for example after a change to `clean_views.sql` or before a dashboard refresh. It doesn't monitor the data continuously.
+
+**How it works**
+- **Uses the dataset skill as its reference.** The [`data-jobs-dataset`](.claude/skills/data-jobs-dataset/SKILL.md) skill is preloaded, so its schema, known issues, metric definitions and documented numbers are what results are compared against.
+- **Read-only.** It runs SQL and Python against `data_jobs.duckdb` opened with `read_only=True`, using temp views only. It never edits files, commits or installs packages, and it stops and reports if a dependency such as `duckdb` is missing.
+- **Two modes.** A *targeted review* (the default) picks the smallest set of its nine checks that answers the question and says why each was chosen and why nearby checks were skipped. A *comprehensive audit* runs all nine on request.
+- **Follow-ups driven by findings.** If a result differs from the documentation by more than about 1%, breaks a rule or looks wrong, it chooses up to about five follow-up queries per finding. For each one it states what it suspected and what the query showed.
+- **Proposes, doesn't decide.** Rule or documentation changes come back as proposals for the user.
+
+**Example: salary completeness (Nov 2026)**
+
+Scope: US postings only; the title rule (title contains "data analyst", the working default) shown next to the source's Data Analyst category; yearly salaries from $25k to $300k, both ends inclusive, counted from the amount column.
+
+| Measure | Title rule | Source category |
+|---|---|---|
+| Postings | 39,519 | 64,268 |
+| With a yearly salary | 7,986 (20.2%) | 12,567 (19.6%) |
+| **Usable yearly salary** | **7,937 (20.1%)** | 12,490 (19.4%) |
+| Yearly salary outside the range | 49 | 77 |
+
+Every previously documented salary-completeness figure reproduced exactly. The table below separates what the agent chose to do from what the user approved:
+
+| Agent-selected (investigation) | User-approved (documentation edits) |
+|---|---|
+| Chose checks for US scope, title rule vs category, the salary range and salary periods, and skipped skill-level checks as irrelevant | — |
+| Followed up on rows with a salary period but no amount (14 under the title rule), salaries exactly at $25k (5), Puerto Rico (228 postings outside the US filter) and spacing variants in titles (53 postings) | Declined changing the title match or adding Puerto Rico. Both rules stay as they were |
+| Found that one salary-range sentence mixed scopes, that "77 outliers" didn't say it was the category figure, that the inclusive range wasn't documented, and that counting by `salary_rate` overstates salaries | Approved fixes to `SKILL.md`, `metrics.md` and `schema.md` after reviewing the diff |
+| In a later documentation-only audit, found files disagreeing on whether rules were decided | Defined four status labels (Decided, Working default, Proposed, Open) and labelled the title rule, salary range and false-match removal as working defaults, not final decisions |
+
+The subagent investigated and reported. The edits were drafted in the main Claude Code session, and each diff was reviewed by the user before it was committed. A few smaller inconsistencies it found have not been fixed yet.
+
 ## Repository layout
 
 ```
@@ -230,6 +263,7 @@ CLAUDE.md                                   Project notes and rules for Claude
 README.md                                   This file
 data_jobs.duckdb                            The database
 images/                                     Charts used in this README
+.claude/agents/data-quality-reviewer.md     Read-only data-quality reviewer subagent
 .claude/skills/data-jobs-dataset/
   SKILL.md                                  What's known about the data and the dashboard
   references/schema.md                      Table and column details
